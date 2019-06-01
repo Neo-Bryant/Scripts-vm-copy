@@ -1,0 +1,153 @@
+#!/bin/bash 
+while :
+do
+    read -p "请输入新增虚拟机名称:" virtname
+    if [ "$virtname" == "" ];then
+	echo "名称不能为空,请重新输入!"
+	continue
+    else
+	break
+    fi
+done
+read -p "请输入虚拟机的主机名(默认与虚拟机名称相同): " hostname
+hostname=${hostname:=$virtname}
+while :
+do
+    read -p "选择默认工作网卡(eth0|eth1|eth2|eth3,默认eth0): " interface
+    case $interface in
+	eth0)
+	    break ;;
+	eth1)
+	    break ;;
+	eth2)
+	    break ;;
+	eth3)
+	    break ;;
+	"")
+    	    interface=${interface:=eth0}
+	    break ;;
+	*)
+	    echo "请输入正确的网卡名或使用默认网卡!";;
+    esac
+done
+while :
+do
+    read -p "请设置'IP/子掩(8/16/24/32)': " IP
+#提取字符 ${var:起始位置:长度}
+#最长匹配删除:${变量名##*关键词}
+#最长匹配删除:${变量名%%关键词*}
+    ip=${IP%%/*}
+    submask=${IP##*/}
+    submask=${submask:-24}
+    yum_baseip=${ip%.*}.254
+    echo $IP | grep / &> /dev/null
+    if [ $? -eq 0 ];then
+	break
+    else
+	echo "子网掩码缺失!请重新输入!"
+	continue
+    fi
+done
+sleep 0.5
+#复制一份磁盘的镜像文件:
+cp /var/lib/libvirt/images/{qemu-demo,${virtname}}.img \
+&& echo -e "虚拟机$virtname -----> \033[33m"磁盘文件准备完成"\033[39m"
+
+sleep 0.5
+#复制一份虚拟机的xml配置文件:
+cp /root/.qemu-demo.xml /etc/libvirt/qemu/${virtname}.xml \
+&& echo -e "虚拟机$virtname -----> \033[33m"xml文件准备完成"\033[39m"
+
+#挂载虚拟磁盘,完成预配置
+#格式:guestmount -a 虚拟机磁盘路径 -i /挂载点
+mkdir /opt/tmp-tmp/    #创建挂载点
+guestmount -a /var/lib/libvirt/images/${virtname}.img -i /opt/tmp-tmp    #挂载镜像磁盘文件
+echo $hostname > /opt/tmp-tmp/etc/hostname    #完成配置主机名
+echo -e "虚拟机$virtname -----> \033[33m"主机名配置完成:$hostname"\033[39m"
+sleep 0.5
+#配置IP和子掩:
+echo "IPADDR=$ip
+PREFIX=$submask" >> /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$interface \
+&& echo -e "虚拟机$virtname -----> \033[33m"IP地址配置完成:${interface}:$ip/$submask"\033[39m"
+sleep 0.5
+#配置yum源:
+sed -i "/ftp/s/192.168.4.254/$yum_baseip/" /opt/tmp-tmp/etc/yum.repos.d/local.repo \
+&& echo -e "虚拟机$virtname -----> \033[33m"yum源配置完成:ftp://$yum_baseip/centos-1804"\033[39m"
+
+#创建一个脚本,完成克隆虚拟机后可以在/root中运行该脚本,实现拓展磁盘空间
+sleep 0.5
+echo "#!/bin/bash
+LANG=en growpart /dev/vda 1
+sleep 0.01
+xfs_growfs /dev/vda1" > /opt/tmp-tmp/root/exblk.sh    #脚本
+chmod +x /opt/tmp-tmp/root/exblk.sh    #添加执行权限
+
+#LANG=en growpart /opt/tmp-tmp/dev/vda 1 &> /dev/null    #以英文环境对虚拟磁盘进行拓容
+#xfs_growfs /opt/tmp-tmp/dev/vda1 &> /dev/null    #对文件系统进行拓容
+umount /opt/tmp-tmp/
+rm -rf /opt/tmp-tmp/
+
+
+#修改xml文件内容
+sed -i '/uuid/d' /etc/libvirt/qemu/${virtname}.xml &> /dev/null    #删除xml配置文件中的uuid,在导入虚拟机信息时,系统会自动生成新的uuid
+sed -i '/mac add/d' /etc/libvirt/qemu/${virtname}.xml &> /dev/null    #删除xml配置文件中的网卡唯一标识(mac地址),在导入虚拟机信息时,系统会自动生成新的mac地址
+sed -i "/<name>/s/backup/$virtname/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null    #修改虚拟机的xml配置文件中的名称
+sed -i "/source file/s/backup/$virtname/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null    #修改xml配置文件中的磁盘镜像文件路径
+
+#根据选择的网卡和IP设置,修改xml中使用的真实虚拟网卡
+case $interface in
+    eth0)
+	case  ${ip%.*} in 
+	    192.168.4)
+		;;
+	    192.168.2)
+		sed -i "/eth0/s/private1/private2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
+	    201.1.1)
+		sed -i "/eth0/s/private1/public1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
+	    201.1.2)
+		sed -i "/eth0/s/private1/public2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
+	    *)
+		;;
+	esac ;;
+    eth1)
+        case  ${ip%.*} in
+            192.168.4)
+                sed -i "/eth1/s/private2/private1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
+            192.168.2)
+		;;
+            201.1.1)
+                sed -i "/eth1/s/private2/public1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
+            201.1.2)
+                sed -i "/eth1/s/private2/public2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
+            *)
+                ;;
+        esac ;;
+    eth2)
+        case  ${ip%.*} in
+            192.168.4)
+                sed -i "/eth2/s/public1/private1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
+            192.168.2)
+                sed -i "/eth2/s/public1/private2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
+            201.1.1)
+		;;
+            201.1.2)
+                sed -i "/eth2/s/public1/public2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
+            *)
+                ;;
+        esac ;;
+    eth3)
+        case  ${ip%.*} in
+            192.168.4)
+                sed -i "/eth3/s/public2/private1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
+            192.168.2)
+                sed -i "/eth3/s/public2/private2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
+            201.1.1)
+                sed -i "/eth3/s/public2/public1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;; 
+            201.1.2)
+                ;;
+            *)
+                ;;
+        esac;;
+esac
+virsh define /etc/libvirt/qemu/${virtname}.xml  &> /dev/null && echo -e "虚拟机$virtname -----> \033[33m"虚拟机定义完成"\033[39m"  #导入新虚拟机信息,完成克隆操作
+echo "完成!"

@@ -1,6 +1,6 @@
 使用环境:KVM
 
-使用vm-copy-1.2本脚本的实现的功能:
+使用vm-copy本脚本的实现的功能:
 1.虚拟机名称设置
 2.主机名设置
 3.虚拟机的网卡设定
@@ -17,6 +17,6 @@
   脚本正常运行需要将两个文件放至指定的位置:
     /var/lib/libvirt/images/qemu-demo.img    #若无img文件,可以复制本地任一个虚拟机的磁盘镜像文件并改名为qemu-demo.img,从而可以使用脚本,建立找一个刚刚新建的虚拟机
     /root/.qemu-demo.xml    #注意脚本中已经将qemu-demo.xml的名称修改为.qemu-demo.xml,隐藏文件,以防误删
-2019-05-31
+2019-06-01
 曾才觉(Neo-Bryant)
 

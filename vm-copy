@@ -61,7 +61,7 @@ cp /root/.qemu-demo.xml /etc/libvirt/qemu/${virtname}.xml \
 #挂载虚拟磁盘,完成预配置
 #格式:guestmount -a 虚拟机磁盘路径 -i /挂载点
 mkdir /opt/tmp-tmp/    #创建挂载点
-guestmount -a /var/lib/libvirt/images/${virtname}.img -i /opt/tmp-tmp    #挂载镜像磁盘文件
+guestmount -a /var/lib/libvirt/images/${virtname}.img -i /opt/tmp-tmp || echo -e "\033[31mguestmount缺失，请确认libguestfs和libguestfs-tools是否已安装\033[39m"   #挂载镜像磁盘文件
 echo $hostname > /opt/tmp-tmp/etc/hostname    #完成配置主机名
 echo -e "虚拟机$virtname -----> \033[33m"主机名配置完成:$hostname"\033[39m"
 sleep 0.5
@@ -71,8 +71,17 @@ PREFIX=$submask" >> /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$interface 
 && echo -e "虚拟机$virtname -----> \033[33m"IP地址配置完成:${interface}:$ip/$submask"\033[39m"
 sleep 0.5
 #配置yum源:
-sed -i "/ftp/s/192.168.4.254/$yum_baseip/" /opt/tmp-tmp/etc/yum.repos.d/local.repo \
+if [ -e /opt/tmp-tmp/etc/yum.repos.d/local.repo ];then    
+    sed -i "/ftp/s/192.168.4.254/$yum_baseip/" /opt/tmp-tmp/etc/yum.repos.d/local.repo \
 && echo -e "虚拟机$virtname -----> \033[33m"yum源配置完成:ftp://$yum_baseip/centos-1804"\033[39m"
+else 
+    echo "[id-centos-1804]
+name=centos-1804 from real machine
+baseurl=ftp://$yum_baseip/centos-1804
+enalbed=1
+gpgcheck=0" > /opt/tmp-tmp/etc/yum.repos.d/centos-1804.repo \
+&& echo -e "虚拟机$virtname -----> \033[33m"yum源配置完成:ftp://$yum_baseip/centos-1804"\033[39m"
+fi
 
 #创建一个脚本,完成克隆虚拟机后可以在/root中运行该脚本,实现拓展磁盘空间
 sleep 0.5

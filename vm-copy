@@ -78,7 +78,7 @@ else
     echo "[id-centos-1804]
 name=centos-1804 from real machine
 baseurl=ftp://$yum_baseip/centos-1804
-enalbed=1
+enabled=1
 gpgcheck=0" > /opt/tmp-tmp/etc/yum.repos.d/centos-1804.repo \
 && echo -e "虚拟机$virtname -----> \033[33m"yum源配置完成:ftp://$yum_baseip/centos-1804"\033[39m"
 fi

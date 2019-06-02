@@ -1,4 +1,5 @@
 使用环境:KVM
+说明：本脚执行过程中会使用到guestmount命令，如果没有此命令，需要安装libguestfs和libguestfs-tools两个软件。
 
 使用vm-copy本脚本的实现的功能:
 1.虚拟机名称设置
@@ -15,8 +16,8 @@
 注:
   qemu-demo.img(磁盘镜像文件,目前由于文件较大,无法上传至github)和qemu-demo.xml文件为虚拟机必要文件!
   脚本正常运行需要将两个文件放至指定的位置:
-    /var/lib/libvirt/images/qemu-demo.img    #若无img文件,可以复制本地任一个虚拟机的磁盘镜像文件并改名为qemu-demo.img,从而可以使用脚本,建立找一个刚刚新建的虚拟机
-    /root/.qemu-demo.xml    #注意脚本中已经将qemu-demo.xml的名称修改为.qemu-demo.xml,隐藏文件,以防误删
+    /var/lib/libvirt/images/qemu-demo.img    #若无img文件,可以复制本地任意一个虚拟机的磁盘镜像文件并改名为qemu-demo.img，即可正常使用脚本,建议找一个刚刚新建的虚拟机
+    /root/.qemu-demo.xml    #注意脚本中已经将qemu-demo.xml的名称修改为.qemu-demo.xml,此举为隐藏文件,以防误删
 2019-06-01
 曾才觉(Neo-Bryant)
 

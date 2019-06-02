@@ -95,6 +95,8 @@ sleep 0.1
 #配置ssh免密登录
 if [ ! -e /root/.ssh/id_rsa.pub ];then
     ssh-keygen -f /root/.ssh/id_rsa -N '' &> /dev/null
+    eval $(ssh-agent -s) &> /dev/null
+    ssh-add &> /dev/null
 fi
 mkdir /opt/tmp-tmp/root/.ssh/ &> /dev/null
 cp -f /root/.ssh/id_rsa.pub /opt/tmp-tmp/root/.ssh/authorized_keys \

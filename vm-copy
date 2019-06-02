@@ -48,28 +48,56 @@ do
 	continue
     fi
 done
-sleep 0.5
+sleep 0.2
+
 #复制一份磁盘的镜像文件:
 cp /var/lib/libvirt/images/{qemu-demo,${virtname}}.img \
 && echo -e "虚拟机$virtname -----> \033[33m"磁盘文件准备完成"\033[39m"
+sleep 0.2
 
-sleep 0.5
 #复制一份虚拟机的xml配置文件:
 cp /root/.qemu-demo.xml /etc/libvirt/qemu/${virtname}.xml \
 && echo -e "虚拟机$virtname -----> \033[33m"xml文件准备完成"\033[39m"
+sleep 0.2
 
 #挂载虚拟磁盘,完成预配置
 #格式:guestmount -a 虚拟机磁盘路径 -i /挂载点
+which guestmount &> /dev/null
+if [ $? -ne 0 ];then
+    echo -e "\033[31mguestmount缺失，请确认libguestfs和libguestfs-tools是否已安装\033[39m"
+    exit 12
+fi
 mkdir /opt/tmp-tmp/    #创建挂载点
-guestmount -a /var/lib/libvirt/images/${virtname}.img -i /opt/tmp-tmp || echo -e "\033[31mguestmount缺失，请确认libguestfs和libguestfs-tools是否已安装\033[39m"   #挂载镜像磁盘文件
+guestmount -a /var/lib/libvirt/images/${virtname}.img -i /opt/tmp-tmp    #挂载镜像磁盘文件
 echo $hostname > /opt/tmp-tmp/etc/hostname    #完成配置主机名
 echo -e "虚拟机$virtname -----> \033[33m"主机名配置完成:$hostname"\033[39m"
-sleep 0.5
+
 #配置IP和子掩:
-echo "IPADDR=$ip
-PREFIX=$submask" >> /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$interface \
+echo "TYPE=Ethernet
+PROXY_METHOD=none
+BROWSER_ONLY=no
+BOOTPROTO=none
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+IPV6INIT=yes
+IPV6_AUTOCONF=yes
+IPV6_DEFROUTE=yes
+IPV6_FAILURE_FATAL=no
+IPV6_ADDR_GEN_MODE=stable-privacy
+NAME=$interface
+DEVICE=$interface
+ONBOOT=yes
+IPADDR=$ip
+PREFIX=$submask" > /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$interface \
 && echo -e "虚拟机$virtname -----> \033[33m"IP地址配置完成:${interface}:$ip/$submask"\033[39m"
-sleep 0.5
+sleep 0.1
+
+#配置ssh免密登录
+mkdir /opt/tmp-tmp/root/.ssh/ &> /dev/null
+cp -f /root/.ssh/id_rsa.pub /opt/tmp-tmp/root/.ssh/authorized_keys \
+&& echo -e "虚拟机$virtname -----> \033[33m"ssh免密登录配置完成"\033[39m"
+sleep 0.1
+
 #配置yum源:
 if [ -e /opt/tmp-tmp/etc/yum.repos.d/local.repo ];then    
     sed -i "/ftp/s/192.168.4.254/$yum_baseip/" /opt/tmp-tmp/etc/yum.repos.d/local.repo \
@@ -84,7 +112,6 @@ gpgcheck=0" > /opt/tmp-tmp/etc/yum.repos.d/centos-1804.repo \
 fi
 
 #创建一个脚本,完成克隆虚拟机后可以在/root中运行该脚本,实现拓展磁盘空间
-sleep 0.5
 echo "#!/bin/bash
 LANG=en growpart /dev/vda 1
 sleep 0.01

@@ -9,6 +9,10 @@ do
 	break
     fi
 done
+if [ -e /var/lib/libvirt/images/$virtname.img ] || [ -e /etc/libvirt/qemu/$virtname.xml ];then
+    echo -e "\033[31m警告:虚拟机$virtname已存在(请检查/var/lib/libvirt/images/$virtname.img和/etc/libvirt/qemu/$virtname.xml是否已经存在)\033[39m"
+    exit 123
+fi
 read -p "请输入虚拟机的主机名(默认与虚拟机名称相同): " hostname
 hostname=${hostname:=$virtname}
 while :

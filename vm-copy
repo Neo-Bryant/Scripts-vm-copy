@@ -136,59 +136,33 @@ sed -i "/<name>/s/backup/$virtname/" /etc/libvirt/qemu/${virtname}.xml &> /dev/n
 sed -i "/source file/s/backup/$virtname/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null    #修改xml配置文件中的磁盘镜像文件路径
 
 #根据选择的网卡和IP设置,修改xml中使用的真实虚拟网卡
-case $interface in
+function devif {
+    case $interface in 
     eth0)
-	case  ${ip%.*} in 
-	    192.168.4)
-		;;
-	    192.168.2)
-		sed -i "/eth0/s/private1/private2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
-	    201.1.1)
-		sed -i "/eth0/s/private1/public1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
-	    201.1.2)
-		sed -i "/eth0/s/private1/public2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
-	    *)
-		;;
-	esac ;;
+	dev=private1;;
     eth1)
-        case  ${ip%.*} in
-            192.168.4)
-                sed -i "/eth1/s/private2/private1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
-            192.168.2)
-		;;
-            201.1.1)
-                sed -i "/eth1/s/private2/public1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
-            201.1.2)
-                sed -i "/eth1/s/private2/public2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
-            *)
-                ;;
-        esac ;;
+	dev=private2;;
     eth2)
-        case  ${ip%.*} in
-            192.168.4)
-                sed -i "/eth2/s/public1/private1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
-            192.168.2)
-                sed -i "/eth2/s/public1/private2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
-            201.1.1)
-		;;
-            201.1.2)
-                sed -i "/eth2/s/public1/public2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
-            *)
-                ;;
-        esac ;;
+	dev=public1;;
     eth3)
-        case  ${ip%.*} in
+	dev=public2;;
+    *)
+	;;
+    esac
+    case  ${ip%.*} in
             192.168.4)
-                sed -i "/eth3/s/public2/private1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
+                sed -i "/$interface/s/$dev/private1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
             192.168.2)
-                sed -i "/eth3/s/public2/private2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
+                sed -i "/$interface/s/$dev/private2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
             201.1.1)
-                sed -i "/eth3/s/public2/public1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;; 
+                sed -i "/$interface/s/$dev/public1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
             201.1.2)
-                ;;
+                sed -i "/$interface/s/$dev/public2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
             *)
+		echo -e "\033[31m警告:IP地址不能与真机虚拟网卡匹配,已使用默认配置\033[39m"
                 ;;
-        esac;;
-esac
+    esac
+}
+devif
 virsh define /etc/libvirt/qemu/${virtname}.xml  &> /dev/null && echo -e "虚拟机$virtname -----> \033[33m"虚拟机定义完成"\033[39m"  #导入新虚拟机信息,完成克隆操作
 echo "完成!"

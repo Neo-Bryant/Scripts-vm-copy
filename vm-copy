@@ -69,6 +69,7 @@ do
     	while :
 	do
             read -p "请选择新网卡(eth0|eth1|eth2|eth3,默认eth0): " inte2
+	    inte2=${inte2:=eth0}
 	    if [ "$inte2" == "$inte" ];then
 	        echo -e "\033[31m""网卡选择重复!请重新选择!""\033[39m"
 	    else
@@ -141,7 +142,7 @@ ONBOOT=yes
 IPADDR=$ip
 PREFIX=$submask" > /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$inte \
 && echo -e "虚拟机$virtname -----> \033[33m"IP地址配置完成:${inte}:$ip/$submask"\033[39m"
-
+if [ ! "$IP2" == "" ];then
 echo "TYPE=Ethernet
 PROXY_METHOD=none
 BROWSER_ONLY=no
@@ -159,7 +160,7 @@ ONBOOT=yes
 IPADDR=$ip2
 PREFIX=$submask2" > /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$inte2 \
 && echo -e "虚拟机$virtname -----> \033[33m"IP地址配置完成:${inte2}:$ip2/$submask2"\033[39m"
-
+fi
 sleep 0.1
 
 #配置ssh免密登录

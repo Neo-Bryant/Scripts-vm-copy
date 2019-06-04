@@ -3,7 +3,7 @@ while :
 do
     read -p "请输入新增虚拟机名称:" virtname
     if [ "$virtname" == "" ];then
-	echo "名称不能为空,请重新输入!"
+	echo -e "\033[31m名称不能为空,请重新输入!\033[39m"
 	continue
     else
 	break
@@ -15,10 +15,8 @@ if [ -e /var/lib/libvirt/images/$virtname.img ] || [ -e /etc/libvirt/qemu/$virtn
 fi
 read -p "请输入虚拟机的主机名(默认与虚拟机名称相同): " hostname
 hostname=${hostname:=$virtname}
-while :
-do
-    read -p "选择默认工作网卡(eth0|eth1|eth2|eth3,默认eth0): " interface
-    case $interface in
+injudge () {
+    case $inj in
 	eth0)
 	    break ;;
 	eth1)
@@ -28,12 +26,21 @@ do
 	eth3)
 	    break ;;
 	"")
-    	    interface=${interface:=eth0}
+    	    inj=${inj:=eth0}
 	    break ;;
 	*)
-	    echo "请输入正确的网卡名或使用默认网卡!";;
+	    echo -e "\033[31m""请输入正确的网卡名或使用默认网卡!""\033[39m";;
     esac
+}
+
+while :
+do
+    read -p "选择默认工作网卡(eth0|eth1|eth2|eth3,默认eth0): " inte
+    inte=${inte:=eth0}
+    inj=$inte    #赋值,方便函数调用
+    injudge      #调用函数,执行网卡判断语句
 done
+
 while :
 do
     read -p "请设置'IP/子掩(8/16/24/32)': " IP
@@ -48,10 +55,50 @@ do
     if [ $? -eq 0 ];then
 	break
     else
-	echo "子网掩码缺失!请重新输入!"
+	echo -e "\033[31m""子网掩码缺失!请重新输入!""\033[39m"
 	continue
     fi
 done
+
+while :
+do     
+    read -p "是否需要设置另一张网卡?(y|n,默认为n)" ans
+    ans=${ans:-n}
+    case $ans in
+    y)
+    	while :
+	do
+            read -p "请选择新网卡(eth0|eth1|eth2|eth3,默认eth0): " inte2
+	    if [ "$inte2" == "$inte" ];then
+	        echo -e "\033[31m""网卡选择重复!请重新选择!""\033[39m"
+	    else
+		inj=$inte2    #赋值,方便函数调用
+	        injudge	     #调用函数,执行网卡判断语句
+	    fi
+	done
+	while :
+	do
+	    read -p "请设置'IP/子掩(8/16/24/32)': " IP2
+            ip2=${IP2%%/*}
+	    submask2=${IP2##*/}
+            submask2=${submask2:-24}
+	    yum_baseip2=${ip2%.*}.254
+            echo $IP2 | grep / &> /dev/null
+	    if [ $? -eq 0 ];then
+                break
+            else
+	        echo -e "\033[31m""子网掩码缺失!请重新输入!""\033[39m"
+	        continue
+	    fi
+	done
+	break;;
+    n)
+        break;;
+    *)
+        echo -e "\033[31m""输入内容不匹配!""\033[39m";;
+    esac
+done
+
 sleep 0.2
 
 #复制一份磁盘的镜像文件:
@@ -88,12 +135,31 @@ IPV6_AUTOCONF=yes
 IPV6_DEFROUTE=yes
 IPV6_FAILURE_FATAL=no
 IPV6_ADDR_GEN_MODE=stable-privacy
-NAME=$interface
-DEVICE=$interface
+NAME=$inte
+DEVICE=$inte
 ONBOOT=yes
 IPADDR=$ip
-PREFIX=$submask" > /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$interface \
-&& echo -e "虚拟机$virtname -----> \033[33m"IP地址配置完成:${interface}:$ip/$submask"\033[39m"
+PREFIX=$submask" > /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$inte \
+&& echo -e "虚拟机$virtname -----> \033[33m"IP地址配置完成:${inte}:$ip/$submask"\033[39m"
+
+echo "TYPE=Ethernet
+PROXY_METHOD=none
+BROWSER_ONLY=no
+BOOTPROTO=none
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+IPV6INIT=yes
+IPV6_AUTOCONF=yes
+IPV6_DEFROUTE=yes
+IPV6_FAILURE_FATAL=no
+IPV6_ADDR_GEN_MODE=stable-privacy
+NAME=$inte2
+DEVICE=$inte2
+ONBOOT=yes
+IPADDR=$ip2
+PREFIX=$submask2" > /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$inte2 \
+&& echo -e "虚拟机$virtname -----> \033[33m"IP地址配置完成:${inte2}:$ip2/$submask2"\033[39m"
+
 sleep 0.1
 
 #配置ssh免密登录
@@ -153,7 +219,7 @@ function devif {
     *)
 	;;
     esac
-    case  ${ip%.*} in
+    case  ${ipmix%.*} in
             192.168.4)
                 sed -i "/$interface/s/$dev/private1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
             192.168.2)
@@ -167,6 +233,21 @@ function devif {
                 ;;
     esac
 }
-devif
+
+
+for aa in $inte $inte2
+do
+    interface=$aa
+    if [ "$interface" == "$inte" ];then
+	ipmix=$ip
+    elif [ "$interface" == "$inte2" ];then 
+	ipmix=$ip2
+    else 
+	echo -e "\033[31m真机网卡配置使用默认配置\033[39m"
+    	break
+    fi
+    devif
+done
+
 virsh define /etc/libvirt/qemu/${virtname}.xml  &> /dev/null && echo -e "虚拟机$virtname -----> \033[33m"虚拟机定义完成"\033[39m"  #导入新虚拟机信息,完成克隆操作
 echo "完成!"

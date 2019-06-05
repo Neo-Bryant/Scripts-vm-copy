@@ -14,8 +14,8 @@ if [ -e /var/lib/libvirt/images/$virtname.img ] || [ -e /etc/libvirt/qemu/$virtn
     exit 123
 fi
 read -p "请输入虚拟机的主机名(默认与虚拟机名称相同): " hostname
-hostname=${hostname:=$virtname}
-injudge () {
+hostname=${hostname:=$virtname}          #设置默认值
+injudge () {                          #网卡设备名称判断函数
     case $inj in
 	eth0)
 	    break ;;
@@ -187,15 +187,18 @@ gpgcheck=0" > /opt/tmp-tmp/etc/yum.repos.d/centos-1804.repo \
 && echo -e "虚拟机$virtname -----> \033[33m"yum源配置完成:ftp://$yum_baseip/centos-1804"\033[39m"
 fi
 
+#配置chronyd,实现开机后时间与真机同步
+sed -i "0,/iburst/{//s/.*/server $yum_baseip iburst\n&/}" /opt/tmp-tmp/etc/chrony.conf 
+
 #创建一个脚本,完成克隆虚拟机后可以在/root中运行该脚本,实现拓展磁盘空间
+#LANG=en growpart /opt/tmp-tmp/dev/vda 1 &> /dev/null    #以英文环境对虚拟磁盘进行拓容
+#xfs_growfs /opt/tmp-tmp/dev/vda1 &> /dev/null    #对文件系统进行拓容
 echo "#!/bin/bash
 LANG=en growpart /dev/vda 1
 sleep 0.01
 xfs_growfs /dev/vda1" > /opt/tmp-tmp/root/exblk.sh    #脚本
 chmod +x /opt/tmp-tmp/root/exblk.sh    #添加执行权限
 
-#LANG=en growpart /opt/tmp-tmp/dev/vda 1 &> /dev/null    #以英文环境对虚拟磁盘进行拓容
-#xfs_growfs /opt/tmp-tmp/dev/vda1 &> /dev/null    #对文件系统进行拓容
 umount /opt/tmp-tmp/
 rm -rf /opt/tmp-tmp/
 

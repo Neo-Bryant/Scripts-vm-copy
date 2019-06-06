@@ -81,6 +81,10 @@ do
 	do
 	    read -p "请设置'IP/子掩(8/16/24/32)': " IP2
             ip2=${IP2%%/*}
+	    if [ "$ip2" == "$ip" ];then
+		echo -e "\033[31m""IP设置重复,请重新设置!""\033[39m"
+		continue
+	    fi
 	    submask2=${IP2##*/}
             submask2=${submask2:-24}
 	    yum_baseip2=${ip2%.*}.254

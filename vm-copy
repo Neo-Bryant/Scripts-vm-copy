@@ -194,14 +194,12 @@ fi
 #配置chronyd,实现开机后时间与真机同步
 sed -i "0,/iburst/{//s/.*/server $yum_baseip iburst\n&/}" /opt/tmp-tmp/etc/chrony.conf 
 
-#创建一个脚本,完成克隆虚拟机后可以在/root中运行该脚本,实现拓展磁盘空间
+#创建一段指令,完成克隆虚拟机后可以在/root中运行该脚本,实现拓展磁盘空间
 #LANG=en growpart /opt/tmp-tmp/dev/vda 1 &> /dev/null    #以英文环境对虚拟磁盘进行拓容
 #xfs_growfs /opt/tmp-tmp/dev/vda1 &> /dev/null    #对文件系统进行拓容
-echo "#!/bin/bash
-LANG=en growpart /dev/vda 1
-sleep 0.01
-xfs_growfs /dev/vda1" > /opt/tmp-tmp/root/exblk.sh    #脚本
-chmod +x /opt/tmp-tmp/root/exblk.sh    #添加执行权限
+echo "LANG=en growpart /dev/vda 1
+xfs_growfs /dev/vda1" >> /opt/tmp-tmp/etc/rc.local    #写入开机执行的脚本中，实现自动扩容
+chmod +x /opt/tmp-tmp/etc/rc.local    #添加执行权限
 
 umount /opt/tmp-tmp/
 rm -rf /opt/tmp-tmp/
@@ -259,3 +257,4 @@ done
 
 virsh define /etc/libvirt/qemu/${virtname}.xml  &> /dev/null && echo -e "虚拟机$virtname -----> \033[33m"虚拟机定义完成"\033[39m"  #导入新虚拟机信息,完成克隆操作
 echo "完成!"
+virsh start $virtname

@@ -124,9 +124,16 @@ if [ $? -ne 0 ];then
     exit 12
 fi
 mkdir /opt/tmp-tmp/    #创建挂载点
-guestmount -a /var/lib/libvirt/images/${virtname}.img -i /opt/tmp-tmp    #挂载镜像磁盘文件
-echo $hostname > /opt/tmp-tmp/etc/hostname    #完成配置主机名
-echo -e "虚拟机$virtname -----> \033[33m"主机名配置完成:$hostname"\033[39m"
+guestmount -a /var/lib/libvirt/images/${virtname}.img -i /opt/tmp-tmp &> /dev/null #挂载镜像磁盘文件
+if [ ! $? -eq 0 ];then 
+    echo -e "\033[31mguestmount命令存在问题,无法正常运行\033[39m"
+	rm -rf /opt/tmp-tmp/
+	rm -rf /var/lib/libvirt/images/${virtname}.img
+	rm -rf /etc/libvirt/qemu/${virtname}.xml
+	exit 23
+fi
+echo $hostname > /opt/tmp-tmp/etc/hostname \
+&& echo -e "虚拟机$virtname -----> \033[33m"主机名配置完成:$hostname"\033[39m"
 
 #配置IP和子掩:
 echo "TYPE=Ethernet

@@ -1,0 +1,41 @@
+#!/bin/bash
+read -p "请输入你要创建的虚拟机号码:" num
+read -p "配置主机名:" name
+read -p "选择网卡eth'0|1|2|3'(输入相应数字):"  w
+read -p "配置ip地址(默认子掩为24):"  ip
+yum_ip=${ip%.*}.254
+expect << EOF
+spawn clone-vm7
+expect "number: " {send "$num\r"}  
+expect "#"	{send "exit\r"}
+EOF
+if [ $? -eq 0 ];then
+	virsh start tedu_node$num &> /dev/null
+    echo -e "\033[33m""虚拟机tedu_node$num正在启动中...请稍等...""\033[39m"
+	for i in `seq 25 | sort -nr`
+	do
+		echo -ne "\033[33m$i \033[39m\r"
+		sleep 1
+	done
+echo -ne "\033[33m正在配置,马上就好... \033[39m\r"
+expect << EOF  &> /dev/null  
+spawn virsh console tedu_node$num
+expect "]"    {send "\r"}
+expect ":"    {send "root\r"}
+expect "Password:"    {send "123456\r"}
+expect "#"    {send "setip\r"}
+expect ":"    {send "eth$w\r"}
+expect ":"    {send "$ip/24\r"}
+expect ":"    {send "\r"}
+expect "#"          { send "hostnamectl set-hostname $name\r" }
+expect "#"          { send "sed -i "0,/iburst/{//s/.*/server $yum_ip iburst\n&/}" /etc/chrony.conf\r" }
+expect "#"          { send "LANG=en growpart /opt/tmp-tmp/dev/vda 1\r" }
+expect "#"          { send "xfs_growfs /opt/tmp-tmp/dev/vda1\r" }
+expect "#"          { send "exit\r" }
+EOF
+else
+	exit
+fi
+echo -e "\033[33m""正在远程虚拟机...""\033[39m"
+sleep 1
+ssh -X root@${ip%%/*}

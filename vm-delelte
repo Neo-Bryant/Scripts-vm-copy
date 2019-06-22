@@ -1,37 +1,30 @@
 #!/bin/bash
-#说明:本脚本根据kvm虚拟机的原理,对.xml文件和.img文件进行删除
 virsh list --all
 while :
 do
-	read -p "请输入需要删除的虚拟机名称: " vm	
-	if [ -e "/etc/libvirt/qemu/${vm}.xml" ];then
-		break 
-	else
-		echo -e "\033[31m虚拟机不存在或输入错误,请重新输入\033[39m"
-		continue
-	fi
+    read -p "请输入需要删除的虚拟机名称(多个请以空格隔开): " name
+    if [ "$name" == ""  ];then
+        echo -e "\033[31m输入不能为空,请重新输入\033[39m"
+        continue
+    fi
+    a=0
+    for vm in $name
+    do
+        if [ ! -e "/etc/libvirt/qemu/${vm}.xml" ];then
+            echo -e "\033[31m虚拟机${vm}不存在,请重新输入\033[39m"
+            a=1
+        fi
+    done
+    if [ $a -eq 0  ];then
+        break
+    fi 
 done
-
-while :
+for vm in $name
 do
-	read -p "是否需要将磁盘镜像文件(.img/qcow2)一并删除?(y/n,默认为y)" ans
-	ans=${ans:-y}
-	virsh destroy $vm &> /dev/null 
-	case $ans in
-	'y')
-	if [ "$ans" == "y" ];then 
-		for img in $(sed -rn "/source file/s/([^']+)'(.*)'.*/\2/p" /etc/libvirt/qemu/${vm}.xml)
-		do
-			rm -rf $img
-		done
-	fi 
-	break;;
-	'n')
-		break;;
-	*)
-		echo -e "\033[31m输入内容不匹配,请重新输入\033[39m";;
-	esac
-			
+    virsh destroy $vm &> /dev/null 
+    for img in $(sed -rn "/source file/s/([^']+)'(.*)'.*/\2/p" /etc/libvirt/qemu/${vm}.xml)
+    do
+        rm -rf $img
+    done
+    virsh undefine $vm &> /dev/null && echo -e "\033[31m"">>>>> 虚拟机${vm}已经从系统删除!""\033[39m"
 done
-virsh undefine $vm &> /dev/null && echo -e "\033[31m虚拟机${vm}已经从系统删除\033[39m"
-#rm -rf /etc/libvirt/qemu/${vm}.xml

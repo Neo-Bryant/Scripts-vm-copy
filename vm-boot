@@ -1,7 +1,0 @@
-#!/bin/bash
-virsh list --all
-read -p ">>> 请输入需要开启的机器,并以空格分隔: " sum
-for i in  $sum   
-do
-    virsh start $i
-done

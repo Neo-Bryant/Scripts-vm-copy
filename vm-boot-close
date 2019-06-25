@@ -1,0 +1,25 @@
+#!/bin/bash
+virsh list --all
+echo -en "\033[33m" 
+cat << eof
+>>>>> 批量启动虚拟机请输入： 1
+>>>>> 批量关闭虚拟机请输入： 2
+eof
+echo -e "\033[39m" 
+read -p "请根据需求输入选项： " op
+case $op in 
+1)
+  read -p ">>> 请输入需要开启的机器,并以空格分隔: " pon
+  for i in  $pon   
+  do
+      virsh start $i
+  done;;
+2)
+  read -p ">>> 请输入需要关闭的机器,并以空格分隔: " poff
+  for j in  $poff
+  do
+      virsh destroy $j
+  done;;
+*)
+  echo -e "\033[33m""输入内容不匹配！""\033[39m";;
+esac

@@ -5,7 +5,7 @@ echo -e "-----------------------------------------------------------------------
 ls /var/lib/libvirt/images/
 echo "----------------------------------------------------------------------------------------------"
 read -p "请选择一个干净的磁盘镜像文件(*.img)做为模板(建议使用全新虚拟机的)，并输入该文件全名：" img
-cp /var/lib/libvirt/images/{${img},qemu-demo.img}
+cp /var/lib/libvirt/images/{${img},qemu-demo.img} || exit
 cp /root/Scripts-vm-copy/qemu-demo.xml /root/.qemu-demo.xml
 ln -s /root/Scripts-vm-copy/vm-box /usr/bin/
 ln -s /root/Scripts-vm-copy/vm-copy /usr/bin/

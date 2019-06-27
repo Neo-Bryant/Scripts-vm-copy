@@ -56,7 +56,7 @@ remove)
     do
         rm -rf $img
     done
-    virsh undefine $vm &> /dev/null && echo -e "\033[31m"">>>>> 虚拟机${vm}已经>从系统删除!""\033[39m"
+    virsh undefine $vm &> /dev/null && echo -e "\033[31m"">>>>> 虚拟机${vm}已经从系统删除!""\033[39m"
 done;;
 *)
   echo -e "\033[33m""输入内容不匹配！""\033[39m";;

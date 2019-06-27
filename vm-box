@@ -5,9 +5,9 @@ echo "----------------------------------------------------"
 echo -n "功能区：" 
 echo -e "\033[33m""
     创建一台虚拟机请输入： create
-    批量启动虚拟机请输入： boot
-    批量关闭虚拟机请输入： down
-    批量删除虚拟机请输入： delete
+    批量启动虚拟机请输入： start
+    批量关闭虚拟机请输入： stop
+    批量删除虚拟机请输入： remove
 ""\033[39m""----------------------------------------------------"
 if [ $# -eq 0 ];then
   read -p "请根据需求输入选项： " op
@@ -17,19 +17,19 @@ fi
 case $op in 
 create)
   /root/Scripts-vm-copy/vm-copy;;
-boot)
+start)
   read -p "请输入需要开启的机器,并以空格分隔: " pon
   for i in  $pon   
   do
       virsh start $i
   done;;
-down)
+stop)
   read -p "请输入需要关闭的机器,并以空格分隔: " poff
   for j in  $poff
   do
       virsh destroy $j
   done;;
-delete)
+remove)
   while :
   do
     read -p "请输入需要删除的虚拟机名称(多个请以空格隔开): " name

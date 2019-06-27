@@ -1,0 +1,63 @@
+#!/bin/bash
+echo "----------------------------------------------------"
+virsh list --all
+echo "----------------------------------------------------"
+echo -n "功能区：" 
+echo -e "\033[33m""
+    创建一台虚拟机请输入： create
+    批量启动虚拟机请输入： boot
+    批量关闭虚拟机请输入： down
+    批量删除虚拟机请输入： delete
+""\033[39m""----------------------------------------------------"
+if [ $# -eq 0 ];then
+  read -p ">>>>> 请根据需求输入选项： " op
+else
+  op=$1
+fi
+case $op in 
+create)
+  /root/Scripts-vm-copy/vm-copy;;
+boot)
+  read -p ">>> 请输入需要开启的机器,并以空格分隔: " pon
+  for i in  $pon   
+  do
+      virsh start $i
+  done;;
+down)
+  read -p ">>> 请输入需要关闭的机器,并以空格分隔: " poff
+  for j in  $poff
+  do
+      virsh destroy $j
+  done;;
+delete)
+  while :
+  do
+    read -p "请输入需要删除的虚拟机名称(多个请以空格隔开): " name
+    if [ "$name" == ""  ];then
+        echo -e "\033[31m输入不能为空,请重新输入\033[39m"
+        continue
+    fi
+    a=0
+    for vm in $name
+    do
+        if [ ! -e "/etc/libvirt/qemu/${vm}.xml" ];then
+            echo -e "\033[31m虚拟机${vm}不存在,请重新输入\033[39m"
+            a=1
+        fi
+    done
+    if [ $a -eq 0  ];then
+        break
+    fi
+  done
+  for vm in $name
+  do
+    virsh destroy $vm &> /dev/null
+    for img in $(sed -rn "/source file/s/([^']+)'(.*)'.*/\2/p" /etc/libvirt/qemu/${vm}.xml)
+    do
+        rm -rf $img
+    done
+    virsh undefine $vm &> /dev/null && echo -e "\033[31m"">>>>> 虚拟机${vm}已经>从系统删除!""\033[39m"
+done;;
+*)
+  echo -e "\033[33m""输入内容不匹配！""\033[39m";;
+esac

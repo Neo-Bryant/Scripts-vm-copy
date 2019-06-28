@@ -51,6 +51,10 @@ do
     submask=${IP##*/}
     submask=${submask:-24}
     yum_baseip=${ip%.*}.254
+    if [ -z $(echo $ip | sed -nr '/^((2[0-4][0-9]|25[0-5]|[01]?[0-9]?[0-9])\.){3}(2[0-4][0-9]|25[0-4]|[01]?[0-9]?[0-9])$/p') ];then
+        echo -e "\033[31m""IP不符合规范!请重新输入!""\033[39m" 
+        continue
+    fi
     echo $IP | grep / &> /dev/null
     if [ $? -eq 0 ];then
 	break

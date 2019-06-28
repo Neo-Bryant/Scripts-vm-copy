@@ -12,12 +12,8 @@ if [ $? -eq 0 ];then
 	read -p "配置ip地址(默认子掩为24,不用输入):"  ip
 	yum_ip=${ip%.*}.254
 	echo -e "\033[33m""虚拟机tedu_node$num正在启动中...请稍等...""\033[39m"
-	for i in `seq 10 | sort -nr`
-	do
-		sleep 1
-	done
 	echo -ne "\033[33m正在配置,马上就好... \033[39m\r"
-	sleep 3
+	sleep 15
 expect << EOF  &> /dev/null  
 spawn virsh console tedu_node$num
 expect "]"    {send "\r"}

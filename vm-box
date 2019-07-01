@@ -19,19 +19,31 @@ case $op in
 create)
   /root/Scripts-vm-copy/vm-copy;;
 start)
-  read -p "请输入需要开启的机器(多个以空格分隔): " pon
+  if [ -z $2 ];then
+    read -p "请输入需要开启的机器(多个以空格分隔): " pon
+  else
+    pon=$2
+  fi
   for i in  $pon   
   do
       virsh start $i
   done;;
 stop)
-  read -p "请输入需要关闭的机器(多个以空格分隔): " poff
+  if [ -z $2 ];then
+    read -p "请输入需要关闭的机器(多个以空格分隔): " poff
+  else
+    poff=$2
+  fi
   for j in  $poff
   do
       virsh destroy $j
   done;;
 restart)
-  read -p "请输入需要重启的机器(多个以空格分隔): " res
+  if [ -z $2 ];then
+    read -p "请输入需要重启的机器(多个以空格分隔): " res
+  else
+    res=$2
+  fi
   for k in  $res
   do
       virsh destroy $k \
@@ -39,25 +51,29 @@ restart)
       && echo -e "\033[33m""虚拟机${k}已经重新启动!""\033[39m"
   done;;
 remove)
-  while :
-  do
-    read -p "请输入需要删除的虚拟机名称(多个以空格分隔): " name
-    if [ "$name" == ""  ];then
-        echo -e "\033[31m输入不能为空,请重新输入\033[39m"
-        continue
-    fi
-    a=0
-    for vm in $name
+  if [ -z $2 ];then
+    while :
     do
-        if [ ! -e "/etc/libvirt/qemu/${vm}.xml" ];then
-            echo -e "\033[31m虚拟机${vm}不存在,请重新输入\033[39m"
-            a=1
-        fi
+      read -p "请输入需要删除的虚拟机名称(多个以空格分隔): " name
+      if [ "$name" == ""  ];then
+          echo -e "\033[31m输入不能为空,请重新输入\033[39m"
+          continue
+      fi
+      a=0
+      for vm in $name
+      do
+          if [ ! -e "/etc/libvirt/qemu/${vm}.xml" ];then
+              echo -e "\033[31m虚拟机${vm}不存在,请重新输入\033[39m"
+              a=1
+          fi
+      done
+      if [ $a -eq 0  ];then
+          break
+      fi
     done
-    if [ $a -eq 0  ];then
-        break
-    fi
-  done
+  else
+  name=$2
+  fi
   for vm in $name
   do
     virsh destroy $vm &> /dev/null

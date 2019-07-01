@@ -1,7 +1,10 @@
 #!/bin/bash
+vmls () {
 echo "----------------------------------------------------"
 virsh list --all
 echo "----------------------------------------------------"
+}
+funls () {
 echo -n "功能区：" 
 echo -e "\033[33m""
     创建一台虚拟机请输入： create
@@ -10,7 +13,12 @@ echo -e "\033[33m""
     批量重启虚拟机请输入： restart
     批量删除虚拟机请输入： remove
 ""\033[39m""----------------------------------------------------"
+}
+oh=0
 if [ $# -eq 0 ];then
+  vmls
+  oh=1
+  funls
   read -p "请根据需求输入选项： " op
 else
   op=$1
@@ -20,6 +28,7 @@ create)
   /root/Scripts-vm-copy/vm-copy;;
 start)
   if [ -z $2 ];then
+    [ $oh -eq 1 ] || vmls
     read -p "请输入需要开启的机器(多个以空格分隔): " pon
   else
     pon=$2
@@ -30,6 +39,7 @@ start)
   done;;
 stop)
   if [ -z $2 ];then
+    [ $oh -eq 1 ] || vmls
     read -p "请输入需要关闭的机器(多个以空格分隔): " poff
   else
     poff=$2
@@ -40,6 +50,7 @@ stop)
   done;;
 restart)
   if [ -z $2 ];then
+    [ $oh -eq 1 ] || vmls
     read -p "请输入需要重启的机器(多个以空格分隔): " res
   else
     res=$2
@@ -52,6 +63,7 @@ restart)
   done;;
 remove)
   if [ -z $2 ];then
+    [ $oh -eq 1 ] || vmls
     while :
     do
       read -p "请输入需要删除的虚拟机名称(多个以空格分隔): " name
@@ -83,6 +95,20 @@ remove)
     done
     virsh undefine $vm &> /dev/null && echo -e "\033[31m"">>>>> 虚拟机${vm}已经从系统删除!""\033[39m"
 done;;
+list)
+  [ $oh -eq 1 ] || vmls;;
+--help)
+cat << EOF
+命令格式: vmbox [list|create|start|stop|restart|remove] <虚拟机名称>
+选项说明:
+    list        后面不需要参数,相当于virsh list --all命令,显示所有虚拟机状态。
+    create      创建新的虚拟机,此命令带来的增益效果具体请参照manual.txt文件说明。
+    start       开启虚拟机,可实现批量启动。当后面有参数时,可以实现快速启动单台虚拟机。
+    stop        关闭虚拟机,可实现批量关闭。当后面有参数时，可以实现快速关闭单台虚拟机。
+    restart     重启虚拟机,可实现批量重启。当后面有参数时,可以实现快速重启单台虚拟机。
+    remove      删除虚拟机，可实现批量删除虚拟机。当后面有参数时，可以实现快速删除单台虚拟机。
+EOF
+;; 
 *)
   echo -e "\033[33m""输入内容不匹配！""\033[39m";;
 esac

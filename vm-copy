@@ -1,4 +1,34 @@
 #!/bin/bash 
+aoteman (){
+cat << EOF
+               #########                       
+              ############                     
+              #############                    
+             ##  ###########                   
+            ###  ###### #####                  
+            ### #######   ####                 
+           ###  ########## ####                
+          ####  ########### ####               
+        #####   ###########  #####             
+       ######   ### ########   #####           
+       #####   ###   ########   ######         
+      ######   ###  ###########   ######       
+     ######   #### ##############  ######      
+    #######  ##################### #######     
+    #######  ##############################    
+   #######  ###### ################# #######   
+   #######  ###### ###### #########   ######   
+   #######    ##  ######   ######     ######   
+   #######        ######    #####     #####    
+    ######        #####     #####     ####     
+     #####        ####      #####     ###      
+      #####      ;###        ###      #        
+        ##       ####        ####              
+      -------------------------------
+        THIS IS A VIRTUAL MACHINE   
+      -------------------------------
+EOF
+}
 while :
 do
     read -p "请输入新增虚拟机名称:" virtname
@@ -136,6 +166,9 @@ if [ ! $? -eq 0 ];then
 	rm -rf /etc/libvirt/qemu/${virtname}.xml
 	exit 23
 fi
+sleep 0.1
+
+#配置主机名
 echo $hostname > /opt/tmp-tmp/etc/hostname \
 && echo -e "虚拟机$virtname -----> \033[33m"主机名配置完成:$hostname"\033[39m"
 
@@ -205,12 +238,12 @@ fi
 #配置chronyd,实现开机后时间与真机同步
 sed -i "0,/iburst/{//s/.*/server $yum_baseip iburst\n&/}" /opt/tmp-tmp/etc/chrony.conf 
 
-#创建一段指令,完成克隆虚拟机后可以在/root中运行该脚本,实现拓展磁盘空间
-#LANG=en growpart /opt/tmp-tmp/dev/vda 1 &> /dev/null    #以英文环境对虚拟磁盘进行拓容
-#xfs_growfs /opt/tmp-tmp/dev/vda1 &> /dev/null    #对文件系统进行拓容
+#配置虚拟机在开机时自动扩容
 echo "LANG=en growpart /dev/vda 1
 xfs_growfs /dev/vda1" >> /opt/tmp-tmp/etc/rc.local    #写入开机执行的脚本中，实现自动扩容
 chmod +x /opt/tmp-tmp/etc/rc.local    #添加执行权限
+
+aoteman > /opt/tmp-tmp/etc/motd    #修改虚拟机的欢迎界面
 
 umount /opt/tmp-tmp/
 rm -rf /opt/tmp-tmp/

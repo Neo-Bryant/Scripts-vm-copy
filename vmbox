@@ -46,7 +46,8 @@ stop)
   fi
   for j in  $poff
   do
-      virsh destroy $j
+    # virsh destroy $j
+    virsh shutdown $j
   done;;
 restart)
   if [ -z $2 ];then

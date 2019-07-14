@@ -18,6 +18,7 @@ if [ "$an" == "y" ];then
 	ls -A /var/lib/libvirt/images/
 	echo "----------------------------------------------------------------------------------------------"
 	read -p "请选择一个干净的磁盘镜像文件(*.img)做为模板(建议使用全新虚拟机的)，并输入该文件全名：" img
+	rm -f /var/lib/libvirt/images/.qemu_base.img &> /dev/null
 	cp /var/lib/libvirt/images/{${img},.qemu_base.img} || exit
 	echo -e "\033[33m""脚本vm-copy2磁盘镜像文件修改完成！""\033[39m"
 elif [ "$an" == "n" ];then 

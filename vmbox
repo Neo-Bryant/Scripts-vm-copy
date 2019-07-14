@@ -25,7 +25,7 @@ else
 fi
 case $op in 
 create)
-  /root/Scripts-vm-copy/vm-copy;;
+  /root/Scripts-vm-copy/vm-copy2;;
 start)
   if [ -z $2 ];then
     [ $oh -eq 1 ] || vmls

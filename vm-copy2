@@ -29,6 +29,19 @@ cat << EOF
       -------------------------------
 EOF
 }
+mk_env () {
+	echo -e "\033[31m""检测到系统尚未部署脚本运行所需模板文件!请按照提示完成环境部署!""\033[39m"
+	echo -e "----------------------------------------------------------------------------------------------
+""\033[33m""系统磁盘镜像目录(/var/lib/libvirt/images/)文件：""\033[39m"
+	ls -A /var/lib/libvirt/images/
+	echo "----------------------------------------------------------------------------------------------"
+	read -p "请选择一个干净的磁盘镜像文件(*.img)做为模板(建议使用全新虚拟机的)，并输入该文件全名：" img
+	cp /var/lib/libvirt/images/{${img},.qemu_base.img} || exit
+	cp /root/Scripts-vm-copy/qemu-demo.xml /var/lib/libvirt/images/.qemu_base.xml
+	ln -s /root/Scripts-vm-copy/vm-copy2 /usr/bin/
+	echo -e "\033[33m""'vm-copy2'环境部署完成！可直接在命令行执行""\033[39m"
+}
+[ ! -e /var/lib/libvirt/images/.qemu_base.img ] && mk_env
 
 while :
 do
@@ -75,6 +88,19 @@ ip=$pip
 submask=$sbmask
 yum_baseip=${ip%.*}.254
 
+brgsetup () {
+	while :
+	do
+		read -p "是否桥接外网?(y|n,默认为n)" br_an
+		br_an=${br_an:-n}
+		[ "$br_an" == "y" ] && brg_val=yes && break
+		[ "$br_an" == "n" ] && brg_val=no && break
+		echo -e "\033[31m""输入内容不符合要求!""\033[39m"
+	done
+}
+brgsetup
+brg=$brg_val
+
 while :
 do     
     read -p "是否需要设置另一张网卡?(y|n,默认为n)" ans
@@ -106,10 +132,10 @@ do
 done
 
 #复制一份磁盘的镜像文件:
-cp /var/lib/libvirt/images/{qemu-demo,${virtname}}.img && echo -e "虚拟机$virtname -----> \033[33m"磁盘文件准备完成"\033[39m"
+cp /var/lib/libvirt/images/{.qemu_base,${virtname}}.img && echo -e "虚拟机$virtname -----> \033[33m"磁盘文件准备完成"\033[39m"
 
 #复制一份虚拟机的xml配置文件:
-cp /root/.qemu-demo.xml /etc/libvirt/qemu/${virtname}.xml && echo -e "虚拟机$virtname -----> \033[33m"xml文件准备完成"\033[39m"
+cp /var/lib/libvirt/images/.qemu_base.xml /etc/libvirt/qemu/${virtname}.xml && echo -e "虚拟机$virtname -----> \033[33m"xml文件准备完成"\033[39m"
 
 #挂载虚拟磁盘,完成预配置,格式:guestmount -a 虚拟机磁盘路径 -i /挂载点
 remov () {
@@ -133,8 +159,8 @@ NAME=$inte
 DEVICE=$inte
 ONBOOT=yes
 IPADDR=$ip
-PREFIX=$submask
-GATEWAY=$yum_baseip" > /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$inte && echo -e "虚拟机$virtname -----> \033[33m"IP地址配置完成:${inte}:$ip/$submask"\033[39m"
+PREFIX=$submask" > /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$inte && echo -e "虚拟机$virtname -----> \033[33m"IP地址配置完成:${inte}:$ip/$submask"\033[39m"
+[ "$brg" == "yes" ] && echo "GATEWAY=$yum_baseip" >> /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$inte && echo -e "虚拟机$virtname -----> \033[33m"网关配置完成:${yum_baseip}"\033[39m"
 if [ -n "$IP2" ];then
 echo "TYPE=Ethernet
 BOOTPROTO="static"
@@ -142,8 +168,7 @@ NAME=$inte2
 DEVICE=$inte2
 ONBOOT=yes
 IPADDR=$ip2
-PREFIX=$submask2
-GATEWAY=$yum_baseip2" > /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$inte2 && echo -e "虚拟机$virtname -----> \033[33m"IP地址配置完成:${inte2}:$ip2/$submask2"\033[39m"
+PREFIX=$submask2" > /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$inte2 && echo -e "虚拟机$virtname -----> \033[33m"IP地址配置完成:${inte2}:$ip2/$submask2"\033[39m"
 fi
 
 #配置ssh免密登录:
@@ -189,24 +214,28 @@ sed -i "/source file/s/backup/$virtname/" /etc/libvirt/qemu/${virtname}.xml &> /
 
 #根据选择的网卡和IP设置,修改xml中使用的真实虚拟网卡
 function devif {
-	[ "$interface" == "eth0" ] && dev=private1
-	[ "$interface" == "eth1" ] && dev=private2
-	[ "$interface" == "eth2" ] && dev=public1
-	[ "$interface" == "eth3" ] && dev=public2
-    case  ${ipmix%.*} in
-        192.168.4)
-            sed -i "/$interface/s/$dev/private1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
-        192.168.2)
-            sed -i "/$interface/s/$dev/private2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
-        201.1.1)
-            sed -i "/$interface/s/$dev/public1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
-        201.1.2)
-            sed -i "/$interface/s/$dev/public2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
-        *)
-			echo -e "\033[31m警告:IP地址不能与真机虚拟网卡匹配,已使用默认配置\033[39m";;
-    esac
+	[ "$interface" == "eth0" ] && dev=private1 && tline=$(sed -n "/interface type/=" /etc/libvirt/qemu/${virtname}.xml | sed -n '1p')
+	[ "$interface" == "eth1" ] && dev=private2 && tline=$(sed -n "/interface type/=" /etc/libvirt/qemu/${virtname}.xml | sed -n '2p')
+	[ "$interface" == "eth2" ] && dev=public1 && tline=$(sed -n "/interface type/=" /etc/libvirt/qemu/${virtname}.xml | sed -n '3p')
+	[ "$interface" == "eth3" ] && dev=public2 && tline=$(sed -n "/interface type/=" /etc/libvirt/qemu/${virtname}.xml | sed -n '4p')
+	if [ "$brg" == "yes" ];then
+		sed -i "${tline}s/.*/    <interface type='bridge'>/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null
+    	sed -i "/$interface/s@.*@      <source bridge='vbr'/>@" /etc/libvirt/qemu/${virtname}.xml &> /dev/null && echo -e "虚拟机$virtname -----> \033[33m"桥接外网配置完成:vbr"\033[39m"
+	else
+		case  ${ipmix%.*} in
+	        192.168.4)
+	            sed -i "/$interface/s/$dev/private1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
+	        192.168.2)
+	            sed -i "/$interface/s/$dev/private2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
+	        201.1.1)
+	            sed -i "/$interface/s/$dev/public1/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
+	        201.1.2)
+	            sed -i "/$interface/s/$dev/public2/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null ;;
+	        *)
+				echo -e "\033[31m警告:IP地址不能与真机虚拟网卡匹配,已使用默认配置\033[39m";;
+	    esac
+	fi	
 }
-
 
 for aa in $inte $inte2
 do
@@ -221,7 +250,6 @@ do
     fi
     devif
 done
-
 virsh define /etc/libvirt/qemu/${virtname}.xml  &> /dev/null && echo -e "虚拟机$virtname -----> \033[33m"虚拟机定义完成"\033[39m"  #导入新虚拟机信息,完成克隆操作
 echo "完成!"
 sleep 0.1

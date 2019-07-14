@@ -29,6 +29,9 @@ cat << EOF
       -------------------------------
 EOF
 }
+ls 
+[ ! -e ./vm-copy2 ] && echo "请在脚本所在目录运行！" && exit 111
+pos=$(pwd)
 mk_env () {
 	echo -e "\033[31m""检测到系统尚未部署脚本运行所需模板文件!请按照提示完成环境部署!""\033[39m"
 	echo -e "----------------------------------------------------------------------------------------------
@@ -37,8 +40,8 @@ mk_env () {
 	echo "----------------------------------------------------------------------------------------------"
 	read -p "请选择一个干净的磁盘镜像文件(*.img)做为模板(建议使用全新虚拟机的)，并输入该文件全名：" img
 	cp /var/lib/libvirt/images/{${img},.qemu_base.img} || exit
-	cp /root/Scripts-vm-copy/qemu-demo.xml /var/lib/libvirt/images/.qemu_base.xml
-	ln -s /root/Scripts-vm-copy/vm-copy2 /usr/bin/
+	cp $pos/qemu-demo.xml /var/lib/libvirt/images/.qemu_base.xml
+	ln -s $pos/vm-copy2 /usr/bin/
 	echo -e "\033[33m""'vm-copy2'环境部署完成！可直接在命令行执行""\033[39m"
 }
 [ ! -e /var/lib/libvirt/images/.qemu_base.img ] && mk_env

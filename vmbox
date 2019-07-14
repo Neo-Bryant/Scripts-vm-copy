@@ -1,7 +1,12 @@
 #!/bin/bash
-vmls () {
+vmls_all () {
 echo "----------------------------------------------------"
 virsh list --all
+echo "----------------------------------------------------"
+}
+vmls_run () {
+echo "----------------------------------------------------"
+virsh list
 echo "----------------------------------------------------"
 }
 funls () {
@@ -16,7 +21,7 @@ echo -e "\033[33m""
 }
 oh=0
 if [ $# -eq 0 ];then
-  vmls
+  vmls_all
   oh=1
   funls
   read -p "请根据需求输入选项： " op
@@ -28,7 +33,7 @@ create)
   /root/Scripts-vm-copy/vm-copy2;;
 start)
   if [ -z $2 ];then
-    [ $oh -eq 1 ] || vmls
+    [ $oh -eq 1 ] || vmls_all
     read -p "请输入需要开启的机器(多个以空格分隔): " pon
   else
     pon=$2
@@ -39,7 +44,7 @@ start)
   done;;
 stop)
   if [ -z $2 ];then
-    [ $oh -eq 1 ] || vmls
+    [ $oh -eq 1 ] || vmls_run
     read -p "请输入需要关闭的机器(多个以空格分隔): " poff
   else
     poff=$2
@@ -51,7 +56,7 @@ stop)
   done;;
 restart)
   if [ -z $2 ];then
-    [ $oh -eq 1 ] || vmls
+    [ $oh -eq 1 ] || vmls_all
     read -p "请输入需要重启的机器(多个以空格分隔): " res
   else
     res=$2
@@ -64,7 +69,7 @@ restart)
   done;;
 remove)
   if [ -z $2 ];then
-    [ $oh -eq 1 ] || vmls
+    [ $oh -eq 1 ] || vmls_all
     while :
     do
       read -p "请输入需要删除的虚拟机名称(多个以空格分隔): " name
@@ -97,7 +102,7 @@ remove)
     virsh undefine $vm &> /dev/null && echo -e "\033[31m"">>>>> 虚拟机${vm}已经从系统删除!""\033[39m"
 done;;
 list)
-  [ $oh -eq 1 ] || vmls;;
+  [ $oh -eq 1 ] || vmls_all;;
 --help)
 cat << EOF
 命令格式: vmbox [list|create|start|stop|restart|remove] <虚拟机名称>

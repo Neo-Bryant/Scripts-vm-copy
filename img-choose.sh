@@ -14,12 +14,13 @@ if [ "$an" == "y" ];then
 	echo -e "\033[33m""\033[87G"'请依照提示进行更换！'"\033[39m"
 	sleep 3
 	echo -e "----------------------------------------------------------------------------------------------
-	""\033[33m""系统磁盘镜像目录(/var/lib/libvirt/images/)文件：""\033[39m"
+""\033[33m""系统磁盘镜像目录(/var/lib/libvirt/images/)文件：""\033[39m"
 	ls -A /var/lib/libvirt/images/
 	echo "----------------------------------------------------------------------------------------------"
 	read -p "请选择一个干净的磁盘镜像文件(*.img)做为模板(建议使用全新虚拟机的)，并输入该文件全名：" img
 	rm -f /var/lib/libvirt/images/.qemu_base.img &> /dev/null
-	cp /var/lib/libvirt/images/{${img},.qemu_base.img} || exit
+#	cp /var/lib/libvirt/images/{${img},.qemu_base.img} || exit
+	qemu-img create -f qcow2 -b /var/lib/libvirt/images/{${img},.qemu_base.img} &> /dev/null || exit 45
 	echo -e "\033[33m""脚本vm-copy2磁盘镜像文件修改完成！""\033[39m"
 elif [ "$an" == "n" ];then 
 	exit 

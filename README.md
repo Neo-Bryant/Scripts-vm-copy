@@ -42,6 +42,6 @@ copy a vm in a very short time that meets the requirement.
   3.如想修改虚拟机的镜像磁盘文件模板（.qemu_base.img文件），可执行脚本img-choose.sh按提示进行修改。  
 ***********************************************
 2019-07-14  
-曾才觉(Neo-Bryant)
+曾才觉(Neo-Bryant)  
 https://github.com/Neo-Bryant/Scripts-vm-copy.git
 

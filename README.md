@@ -6,8 +6,8 @@ copy a vm in a very short time and meet the requirement.
 ## 说明：
   使用环境：KVM  
   主要配置实现的命令：guestmount  
-  核心脚本文件：vm-copy2  qemu-demo.xml  
-  辅助脚本文件：vmbox  img-choose  
+  核心脚本文件：vm-copy2 &ensp; qemu-demo.xml  
+  辅助脚本文件：vmbox &ensp; img-choose  
 ************************************************
 ## vm-copy2实现的功能:  
   1.虚拟机名称设置  
@@ -20,11 +20,11 @@ copy a vm in a very short time and meet the requirement.
   8.根据IP自动选择连接真机的网卡(KVM配置)  
   9.实现与主机时间同步配置  
   10.其他:  
-    脚本环境自动检测等  
-    初次使用可协助完成部署环境  
-    虚拟机｜主机名称检查  
-    网卡名称合法性判定  
-    子网掩码合法性判定  
+&emsp; 脚本环境自动检测等  
+&emsp; 初次使用可协助完成部署环境  
+&emsp; 虚拟机｜主机名称检查  
+&emsp; 网卡名称合法性判定  
+&emsp; 子网掩码合法性判定  
 ***********************************************
 ## vm-box实现的功能：  
   1.创建虚拟机（调用vm-copy2脚本）  

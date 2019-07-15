@@ -36,12 +36,12 @@ poli () {
 }
 pos=$(pwd)
 mk_env () {
-	echo -e "\033[31m""检测到系统尚未部署脚本运行所需模板文件!请按照提示完成环境部署!""\033[39m"
 	echo -e "----------------------------------------------------------------------------------------------
 ""\033[33m""系统磁盘镜像目录(/var/lib/libvirt/images/)文件：""\033[39m"
 	ls -A /var/lib/libvirt/images/
 	echo "----------------------------------------------------------------------------------------------"
-	read -p "请选择一个干净的磁盘镜像文件(*.img|*.qcow2)做为模板(建议使用全新虚拟机的)，并输入该文件全名：" img
+	echo -e "\033[31m""检测到系统尚未部署脚本运行所需模板文件!请按照提示完成环境部署!""\033[39m"
+	read -p "请在磁盘文件目录中选择一个磁盘镜像文件(*.img|*.qcow2)做为模板，并输入该文件全名：" img
 #	cp /var/lib/libvirt/images/{${img},.qemu_base.img} || exit
 	qemu-img create -f qcow2 -b /var/lib/libvirt/images/{${img},.qemu_base.img} 20G &> /dev/null || exit 120	
 	cp $pos/qemu-demo.xml /var/lib/libvirt/images/.qemu_base.xml
@@ -50,6 +50,7 @@ mk_env () {
 	exit
 }
 [ ! -e /var/lib/libvirt/images/.qemu_base.img ] && poli && mk_env
+chmod +x $0
 
 while :
 do

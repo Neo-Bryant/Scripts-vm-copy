@@ -46,7 +46,7 @@ mk_env () {
 	qemu-img create -f qcow2 -b /var/lib/libvirt/images/{${img},.qemu_base.img} 20G &> /dev/null || exit 120	
 	cp $pos/qemu-demo.xml /var/lib/libvirt/images/.qemu_base.xml
 	chmod +x $pos/vm-copy2
-	ln -s $pos/vm-copy2 /usr/bin/
+	ln -s $pos/vm-copy2 /usr/bin/ &> /dev/null
 	echo -e "\033[33m""脚本vm-copy2环境部署完成！可直接在命令行执行""\033[39m"
 	read -p "这是您首次使用本脚本，是否需要阅读脚本说明文件，这将有助于您更好的理解脚本提供的功能(y|n，默认y)" choi
 	choi=${choi:-y}

@@ -37,7 +37,7 @@ copy a vm in a very short time that meets the requirement.
 注意：该操作适用于首次部署环境使用，否则可能会造成前面由vm-copy2创建虚拟机崩溃。  
 ***********************************************
 ## 注:  
-  1.".qemu_base.img文件"和".qemu_base.xml文件"为虚拟机必要文件!  
+  1.".qemu_base.img文件"和".qemu_base.xml文件"为虚拟机必要文件!在部署环境时会自动完成部署。  
   2.初次运行脚本时会自动检测脚本所需要的环境，如模板文件的部署，guestmount命令检查等  
   3.如想修改虚拟机的镜像磁盘文件模板（.qemu_base.img文件），可执行脚本img-choose.sh按提示进行修改。  
 ***********************************************

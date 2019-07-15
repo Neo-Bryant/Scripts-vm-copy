@@ -1,7 +1,6 @@
 # Scripts-vm-copy
-on the KVM platform,
-copy a vm in a very short time and meet the requirement.
-.welcome to join this little project
+On the KVM platform,
+copy a vm in a very short time that meets the requirement.
 
 ## 说明：
   使用环境：KVM  

@@ -66,20 +66,22 @@ if [ -e /var/lib/libvirt/images/$virtname.img ] || [ -e /etc/libvirt/qemu/$virtn
     exit 123
 fi
 
-read -p "请输入虚拟机的主机名(默认与虚拟机名称相同): " hostname
-[ -z $hostname ] && hostname=$virtname          #设置主机名默认值
-ifchoose () {
-	while :
-	do
-	    read -p "请选择网卡(eth0|eth1|eth2|eth3,默认eth0): " ifname
-	    ifname=${ifname:=eth0}    #默认网卡设置
-		[ -z $(echo $ifname | grep eth[0-3]) ] && echo -e "\033[31m""网卡名不符合要求!""\033[39m" && continue   #网卡合法性检测
-		break
-	done
-}
-ifchoose
-inte=$ifname
+#read -p "请输入虚拟机的主机名(默认与虚拟机名称相同): " hostname
+#[ -z $hostname ] && hostname=$virtname          #设置主机名默认值
+hostname=$virtname
 
+#ifchoose () {
+#	while :
+#	do
+#	    read -p "请选择网卡(eth0|eth1|eth2|eth3,默认eth0): " ifname
+#	    ifname=${ifname:=eth0}    #默认网卡设置
+#		[ -z $(echo $ifname | grep eth[0-3]) ] && echo -e "\033[31m""网卡名不符合要求!""\033[39m" && continue   #网卡合法性检测
+#		break
+#	done
+#}
+#ifchoose
+#inte=$ifname
+inte=eth0
 ipsetup () {
 	while :
 	do
@@ -102,18 +104,18 @@ ip=$pip
 submask=$sbmask
 yum_baseip=${ip%.*}.254
 
-brgsetup () {
-	while :
-	do
-		read -p "是否桥接外网?(y|n,默认为n)" br_an
-		br_an=${br_an:-n}
-		[ "$br_an" == "y" ] && brg_val=yes && break
-		[ "$br_an" == "n" ] && brg_val=no && break
-		echo -e "\033[31m""输入内容不符合要求!""\033[39m"
-	done
-}
-brgsetup
-brg=$brg_val
+#brgsetup () {
+#	while :
+#	do
+#		read -p "是否桥接外网?(y|n,默认为n)" br_an
+#		br_an=${br_an:-n}
+#		[ "$br_an" == "y" ] && brg_val=yes && break
+#		[ "$br_an" == "n" ] && brg_val=no && break
+#		echo -e "\033[31m""输入内容不符合要求!""\033[39m"
+#	done
+#}
+#brgsetup
+#brg=$brg_val
 
 while :
 do     
@@ -121,13 +123,14 @@ do
     ans=${ans:-n}
     case $ans in
     y)
-		while :
-		do
-			ifchoose
-			inte2=$ifname
-			[ "$inte2" == "$inte" ] && echo -e "\033[31m""该网卡已被使用!""\033[39m" && continue
-			break
-		done
+#		while :
+#		do
+#			ifchoose
+#			inte2=$ifname
+#			[ "$inte2" == "$inte" ] && echo -e "\033[31m""该网卡已被使用!""\033[39m" && continue
+#			break
+#		done
+		inte2=eth1
 		while :
 		do
 			ipsetup
@@ -175,7 +178,8 @@ DEVICE=$inte
 ONBOOT=yes
 IPADDR=$ip
 PREFIX=$submask" > /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$inte && echo -e "虚拟机$virtname -----> \033[33m"IP地址配置完成:${inte}:$ip/$submask"\033[39m"
-[ "$brg" == "yes" ] && echo "GATEWAY=$yum_baseip" >> /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$inte && echo -e "虚拟机$virtname -----> \033[33m"网关配置完成:${yum_baseip}"\033[39m"
+#[ "$brg" == "yes" ] && echo "GATEWAY=$yum_baseip" >> /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$inte && echo -e "虚拟机$virtname -----> \033[33m"网关配置完成:${yum_baseip}"\033[39m"
+[ "${ip%.*}" == "192.168.1" ] && echo "GATEWAY=$yum_baseip" >> /opt/tmp-tmp/etc/sysconfig/network-scripts/ifcfg-$inte && echo -e "虚拟机$virtname -----> \033[33m"网关配置完成:${yum_baseip}"\033[39m"
 if [ -n "$ip2" ];then
 echo "TYPE=Ethernet
 BOOTPROTO="static"
@@ -231,9 +235,10 @@ sed -i "/source file/s/backup/$virtname/" /etc/libvirt/qemu/${virtname}.xml &> /
 function devif {
 	[ "$interface" == "eth0" ] && dev=private1 && tline=$(sed -n "/interface type/=" /etc/libvirt/qemu/${virtname}.xml | sed -n '1p')
 	[ "$interface" == "eth1" ] && dev=private2 && tline=$(sed -n "/interface type/=" /etc/libvirt/qemu/${virtname}.xml | sed -n '2p')
-	[ "$interface" == "eth2" ] && dev=public1 && tline=$(sed -n "/interface type/=" /etc/libvirt/qemu/${virtname}.xml | sed -n '3p')
-	[ "$interface" == "eth3" ] && dev=public2 && tline=$(sed -n "/interface type/=" /etc/libvirt/qemu/${virtname}.xml | sed -n '4p')
-	if [ "$brg" == "yes" ];then
+#	[ "$interface" == "eth2" ] && dev=public1 && tline=$(sed -n "/interface type/=" /etc/libvirt/qemu/${virtname}.xml | sed -n '3p')
+#	[ "$interface" == "eth3" ] && dev=public2 && tline=$(sed -n "/interface type/=" /etc/libvirt/qemu/${virtname}.xml | sed -n '4p')
+#	if [ "$brg" == "yes" ];then
+	if [ "${ipmix%.*}" == "192.168.1" ];then
 		sed -i "${tline}s/.*/    <interface type='bridge'>/" /etc/libvirt/qemu/${virtname}.xml &> /dev/null
     	sed -i "/$interface/s@.*@      <source bridge='vbr'/>@" /etc/libvirt/qemu/${virtname}.xml &> /dev/null && echo -e "虚拟机$virtname -----> \033[33m"桥接外网配置完成:vbr"\033[39m"
 	else

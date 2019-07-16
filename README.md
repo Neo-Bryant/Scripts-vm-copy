@@ -11,9 +11,9 @@ copy a vm in a very short time that meets the requirement.
 ## vm-copy2实现的功能:  
   1.虚拟机名称设置  
   2.主机名设置  
-  3.虚拟机的网卡设定  
-  4.为指定网卡配置IP和子掩  
-  5.按需配置桥接外网，实现虚拟机上网  
+  3.虚拟机的网卡设定（默认选项）   
+  4.按输入要求配置IP和子掩（默认24）   
+  5.自动配置桥接外网（仅192.168.1.0网络），实现虚拟机上网  
   6.自动配置实现ssh免密登录  
   7.自动搭建好yum(修改本来存在的yum配置)  
   8.根据IP自动选择连接真机的网卡(KVM配置)  
@@ -21,8 +21,8 @@ copy a vm in a very short time that meets the requirement.
   10.其他:  
 &emsp; 脚本环境自动检测等  
 &emsp; 初次使用可协助完成部署环境  
-&emsp; 虚拟机｜主机名称检查  
-&emsp; 网卡名称合法性判定  
+&emsp; 虚拟机｜主机名称检查    
+&emsp; IP地址合法性判定  
 &emsp; 子网掩码合法性判定  
 ***********************************************
 ## vm-box实现的功能：  
@@ -41,7 +41,7 @@ copy a vm in a very short time that meets the requirement.
   2.初次运行脚本时会自动检测脚本所需要的环境，如模板文件的部署，guestmount命令检查等  
   3.如想修改虚拟机的镜像磁盘文件模板（.qemu_base.img文件），可执行脚本img-choose.sh按提示进行修改。  
 ***********************************************
-2019-07-14  
+2019-07-16  
 曾才觉(Neo-Bryant)  
 https://github.com/Neo-Bryant/Scripts-vm-copy.git
 

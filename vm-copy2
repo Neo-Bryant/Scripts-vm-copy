@@ -42,8 +42,8 @@ mk_env () {
 	echo "----------------------------------------------------------------------------------------------"
 	echo -e "\033[31m""检测到系统尚未部署脚本运行所需模板文件!请按照提示完成环境部署!""\033[39m"
 	read -p "请在磁盘文件目录中选择一个磁盘镜像文件(*.img|*.qcow2)做为模板，并输入该文件全名：" img
-#	cp /var/lib/libvirt/images/{${img},.qemu_base.img} || exit
-	qemu-img create -f qcow2 -b /var/lib/libvirt/images/{${img},.qemu_base.img} 20G &> /dev/null || exit 120	
+	cp /var/lib/libvirt/images/{${img},.qemu_base.img} || exit 563
+#	qemu-img create -f qcow2 -b /var/lib/libvirt/images/{${img},.qemu_base.img} 20G &> /dev/null || exit 120	
 	cp $pos/qemu-demo.xml /var/lib/libvirt/images/.qemu_base.xml
 	chmod +x $pos/vm-copy2
 	ln -s $pos/vm-copy2 /usr/bin/ &> /dev/null
@@ -261,11 +261,11 @@ for aa in $inte $inte2
 do
     interface=$aa
     if [ "$interface" == "$inte" ];then
-	ipmix=$ip
+		ipmix=$ip
     elif [ "$interface" == "$inte2" ];then 
-	ipmix=$ip2
+		ipmix=$ip2
     else 
-	echo -e "\033[31m真机网卡配置使用默认配置\033[39m"
+		echo -e "\033[31m真机网卡配置使用默认配置\033[39m"
     	break
     fi
     devif

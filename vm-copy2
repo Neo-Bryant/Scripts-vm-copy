@@ -201,7 +201,7 @@ cp -f /root/.ssh/id_rsa.pub /opt/tmp-tmp/root/.ssh/authorized_keys && echo -e "�
 
 #配置yum源:
 if [ -e /opt/tmp-tmp/etc/yum.repos.d/local.repo ];then    
-    sed -i "/baseurl=ftp/s@.*@baseurl=ftp://$yum_baseip/centos-1804@" /opt/tmp-tmp/etc/yum.repos.d/local.repo && echo -e "虚拟机$virtname -----> \033[33m"yum源配置完成:ftp://$yum_baseip/centos-1804"\033[39m"
+    sed -i "/baseurl=/s@.*@baseurl=\"ftp://$yum_baseip/centos-1804\"@" /opt/tmp-tmp/etc/yum.repos.d/local.repo && echo -e "虚拟机$virtname -----> \033[33m"yum源配置完成:ftp://$yum_baseip/centos-1804"\033[39m"
 else 
     echo "[id-centos-1804]
 name=centos-1804 from real machine

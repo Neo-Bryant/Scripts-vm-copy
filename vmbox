@@ -63,8 +63,8 @@ restart)
   fi
   for k in  $res
   do
-      virsh destroy $k \
-      && virsh start $k \
+      virsh destroy $k 
+      virsh start $k \
       && echo -e "\033[33m""虚拟机${k}已经重新启动!""\033[39m"
   done;;
 remove)

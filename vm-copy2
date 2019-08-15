@@ -54,13 +54,13 @@ mk_env () {
 	exit
 }
 [ ! -e /var/lib/libvirt/images/.qemu_base.img ] && poli && mk_env
-
 while :
 do
-    read -p "请输入新增虚拟机名称:" virtname
-	[ -z $virtname ] && echo -e "\033[31m虚拟机名称不能为空!\033[39m" && continue
-	break
+    [ -z $1 ] && read -p "请输入新增虚拟机名称:" virtname || virtname=$1
+    [ -z $virtname ] && echo -e "\033[31m虚拟机名称不能为空!\033[39m" && continue
+    break
 done
+
 if [ -e /var/lib/libvirt/images/$virtname.img ] || [ -e /etc/libvirt/qemu/$virtname.xml ];then
     echo -e "\033[31m警告:虚拟机$virtname已存在(请检查/var/lib/libvirt/images/$virtname.img和/etc/libvirt/qemu/$virtname.xml是否已经存在)\033[39m"
     exit 123
@@ -82,16 +82,17 @@ hostname=$virtname
 #ifchoose
 #inte=$ifname
 inte=eth0
+export Gip=$2
 ipsetup () {
 	while :
 	do
-	    read -p "请设置IP地址（格式：IP/子网掩码(8/16/24，默认24)）：" IP
-		[ -z $IP ] && echo -e "\033[31m""输入内容为空!""\033[39m" && continue
-	    pip=${IP%%/*}			#去尾，得到纯ip地址
-	    [ -z $(echo $pip | sed -nr '/^((2[0-4][0-9]|25[0-5]|[01]?[0-9]?[0-9])\.){3}(2[0-4][0-9]|25[0-4]|[01]?[0-9]?[0-9])$/p') ] && echo -e "\033[31m""IP不符合规范!""\033[39m" && continue
+                read -p "请设置IP地址（格式：IP/子网掩码(8/16/24，默认24)）：" IP
+	        [ -z $IP ] && echo -e "\033[31m""输入内容为空!""\033[39m" && continue
+	        pip=${IP%%/*}			#去尾，得到纯ip地址
+	        [ -z $(echo $pip | sed -nr '/^((2[0-4][0-9]|25[0-5]|[01]?[0-9]?[0-9])\.){3}(2[0-4][0-9]|25[0-4]|[01]?[0-9]?[0-9])$/p') ] && echo -e "\033[31m""IP不符合规范!""\033[39m" && continue
 		[ -z $(echo $IP | grep '/') ] && sbmask=24 && break
 		iprange=${pip%%.*}		#去尾，得到IP所在范围（A：1-127，B：128-191，C：192-223，D：224-239，E：240-254）
-	    sbmask=${IP##*/}		#掐头，得到子网掩码（8/16/24/32）
+	        sbmask=${IP##*/}		#掐头，得到子网掩码（8/16/24/32）
 		[ $iprange -ge 1 -a $iprange -le 127 ] && sm=8
 		[ $iprange -ge 128 -a $iprange -le 191 ] && sm=16
 		[ $iprange -ge 192 -a $iprange -le 223 ] && sm=24
@@ -99,7 +100,19 @@ ipsetup () {
 		break
 	done
 }
-ipsetup
+ip_check () {
+	IP=$Gip
+	pip=${IP%%/*}                   #去尾，得到纯ip地址
+        [ -z $(echo $pip | sed -nr '/^((2[0-4][0-9]|25[0-5]|[01]?[0-9]?[0-9])\.){3}(2[0-4][0-9]|25[0-4]|[01]?[0-9]?[0-9])$/p') ] && echo -e "\033[31m""IP不符合规范!""\033[39m" && ipsetup && return
+        [ -z $(echo $IP | grep '/') ] && sbmask=24 && return
+        iprange=${pip%%.*}              #去尾，得到IP所在范围（A：1-127，B：128-191，C：192-223，D：224-239，E：240-254）
+      	sbmask=${IP##*/}            #掐头，得到子网掩码（8/16/24/32）
+        [ $iprange -ge 1 -a $iprange -le 127 ] && sm=8
+        [ $iprange -ge 128 -a $iprange -le 191 ] && sm=16
+        [ $iprange -ge 192 -a $iprange -le 223 ] && sm=24
+        [ ! "$sbmask" == "$sm" ] && echo -e "\033[31m""子网掩码缺失或异常!""\033[39m" && ipsetup && return       #检测子网掩码的合法性
+}
+[ -z $Gip ] && ipsetup || ip_check
 ip=$pip
 submask=$sbmask
 yum_baseip=${ip%.*}.254
@@ -119,6 +132,7 @@ yum_baseip=${ip%.*}.254
 
 while :
 do     
+    [ $# -ge 1 ] && break
     read -p "是否需要设置另一张网卡?(y|n,默认为n)" ans
     ans=${ans:-n}
     case $ans in
